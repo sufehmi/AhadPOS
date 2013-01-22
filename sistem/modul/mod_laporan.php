@@ -1,4 +1,4 @@
-<?php
+ <?php
 /* mod_laporan.php ------------------------------------------------------
    	version: 1.01
 
@@ -14,9 +14,31 @@ GNU General Public License v2 (links provided above) for more details.
 ----------------------------------------------------------------*/
 
 
-include "../config/config.php";
+include "../../config/config.php";
 // check_user_access(basename($_SERVER['SCRIPT_NAME']));
 
+echo "
+	<link href='../../config/adminstyle.css' rel='stylesheet' type='text/css' />
+
+        <SCRIPT TYPE='text/javascript'>
+        <!--
+        function popupform(myform, windowname)
+        {
+                if (! window.focus)return true;
+                window.open('', windowname, 'type=fullWindow,fullscreen,scrollbars=yes');
+                myform.target=windowname;
+                return true;
+        }
+        //-->
+        </SCRIPT>
+	";
+
+
+
+
+switch($_GET[act]){ //------------------------------------------------------------------------
+
+    default:
 
         echo "<h2>Laporan Manajemen</h2>
 
@@ -42,16 +64,27 @@ include "../config/config.php";
 		</td>
 
 		</tr>
-		</table>";
 
+		<tr>
+	
+			<td>
+			<form method=POST action='?module=laporan&act=toprank1'>
+			<input type=submit value='(r) Top Rank' accesskey='r'>
+			</form>
+			</td>
 
+	
+			<td>
+			<form method=POST action='?module=laporan&act=aging1'>
+			<input type=submit value='(a) Aging' accesskey='a'>
+			</form>
+			</td>
 
-switch($_GET[act]){ //------------------------------------------------------------------------
+		</tr>
+		</table>
 
-    default:
+	";
 
-	echo "
-		";
         break;
 
 
@@ -448,11 +481,147 @@ switch($_GET[act]){ //----------------------------------------------------------
 	}
 
 
+  case 'toprank1': { // ---------------------------------------------------------------------------------
+
+	$tanggal = date('Y-m-d');
+	echo "
+              <br/>
+              <h2>Laporan Top Rank</h2>
+
+			<form method=POST action='modul/mod_laporan.php?act=toprank2' onSubmit=\"popupform(this, 'top-rank')\">
+	
+		<table>
+        	<tr>
+			<td>Dari Tanggal </td>
+			<td>: <input type=text name=dari value='$tanggal'>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Sampai Tanggal </td>
+			<td>: <input type=text name=sampai value='$tanggal'>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Kategori </td>
+			<td>: 	<select name='kategori'> 
+				<option value='SEMUA' selected>SEMUA</option>";
+		$hasil	= mysql_query("SELECT idKategoriBarang, namaKategoriBarang FROM kategori_barang");
+		while ($x = mysql_fetch_array($hasil)) {
+			echo "<option value='".$x['idKategoriBarang']."'>".$x['namaKategoriBarang']."</option>";
+		};
+
+		echo "		</select>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Jumlah Item </td>
+			<td>: <input type=text name=jumlah value='200'>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Sortir berdasarkan</td>
+			<td>: 	<select name='sortir'> 
+				<option value='jumlah' selected>jumlah</option>
+				<option value='omset' >		omset</option>
+				<option value='profit'>		profit</option>
+				</select>
+			</td>
+		</tr>
+
+
+        		<tr><td colspan=2><input type=submit value='Buat Laporan'></td></tr>
+		</table>
+			
+		</form>
+
+		";
+	exit;
+	}
+
+  case 'toprank2': { // ---------------------------------------------------------------------------------
+
+	if ($_POST['kategori'] == 'SEMUA') {
+		$kategori = 'SEMUA'; 
+	} else {
+		$hasil 	= mysql_query("SELECT namaKategoriBarang FROM kategori_barang WHERE idKategoriBarang=".$_POST['kategori']);
+		$x	= mysql_fetch_array($hasil);
+		$kategori = $x['namaKategoriBarang'];
+	};
+
+	if ($_POST['kategori'] == 'SEMUA') { 
+		$idKategoriBarang = '';	
+	} else {
+		$idKategoriBarang = 'AND b.idKategoriBarang = '.$_POST['kategori'];	
+	};
+
+	$sortir = $_POST['sortir'];
+	$sql	= "SELECT lb.barcode, lb.namaBarang, COUNT(lb.barcode) AS jumlah, SUM(lb.hargaJual) AS omset, 
+			SUM(lb.hargaJual - lb.hargaBeli) AS profit
+		FROM 	(SELECT dj.barcode AS barcode, b.namaBarang AS namaBarang, dj.hargaJual, dj.hargaBeli, b.idKategoriBarang  
+      			FROM barang AS b, 
+             			(SELECT barcode, hargaJual, hargaBeli FROM detail_jual AS j, 
+                    			(SELECT idTransaksiJual AS nomorStruk FROM transaksijual 
+                    			WHERE tglTransaksiJual BETWEEN '".$_POST['dari']." 00:00:01' AND '".$_POST['sampai']." 23:59:59') AS t
+             			WHERE j.nomorStruk = t.nomorStruk) AS dj  
+			WHERE dj.barcode = b.barcode  $idKategoriBarang ORDER BY dj.barcode) AS lb 
+		GROUP BY lb.barcode 
+		ORDER BY $sortir DESC
+		LIMIT ".$_POST['jumlah'].";
+		";
+	$hasil	= mysql_query($sql) or die("Error : ".mysql_error());
+	//echo $sql;
+
+	echo "
+		<br/>
+		<h2>Laporan Top Rank</h2>
+		Tanggal:".$_POST['dari']." s/d ".$_POST['sampai']." Kategori: $kategori
+
+		<table>
+		<tr>
+			<td class=td><b><center>No.</center></b></td>
+			<td class=td><b><center>Barcode</center></b></td>
+			<td class=td><b><center>Nama Barang</center></b></td>
+			<td class=td><b><center>Jumlah</center></b></td>
+			<td class=td><b><center>Omset</center></b></td>
+			<td class=td><b><center>Profit</center></b></td>
+		</tr>
+		";
+
+	$no=0;
+	while ($x=mysql_fetch_array($hasil)){
+		//untuk mewarnai tabel menjadi selang-seling
+		$no++;
+		if(($no % 2) == 0){
+			$warna = "#EAF0F7";
+		} else {
+			$warna = "#FFFFFF";
+		}
+
+		echo "<tr bgcolor=$warna>";
+		echo "
+			<td class=td align=center> $no </td>
+			<td class=td> ".$x['barcode']." </td>
+			<td class=td> ".$x['namaBarang']." </td>
+			<td class=td align=right> ".number_format($x['jumlah'],0,',','.')." </td>
+			<td class=td align=right> ".number_format($x['omset'],0,',','.')." </td>
+			<td class=td align=right> ".number_format($x['profit'],0,',','.')." </td>
+			</tr>";
+	};
+	echo "</table>";
+
+	exit;
+	}
+
 }
 
 
 /* CHANGELOG -----------------------------------------------------------
 
+ 1.5.5 / 2013-01-22 : Harry Sufehmi	: Penambahan Laporan : Top Rank
  1.5.0 / 2013-01-04 : Harry Sufehmi	: bugfix : perbaikan rumus perhitungan Total Stok
  1.2.5 / 2012-05-14 : Harry Sufehmi	: fitur : audit trail untuk "hapusjual"
  1.2.5 / 2012-04-17 : Harry Sufehmi	: bugfix : perbaikan rumus perhitungan Total Stok

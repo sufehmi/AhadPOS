@@ -616,6 +616,144 @@ switch($_GET[act]){ //----------------------------------------------------------
 	exit;
 	}
 
+
+  case 'aging1': { // ---------------------------------------------------------------------------------
+
+	$tanggal = date('Y-m-d');
+	echo "
+              <br/>
+              <h2>Laporan Aging / Barang Mati</h2>
+
+			<form method=POST action='modul/mod_laporan.php?act=aging2' onSubmit=\"popupform(this, 'aging')\">
+	
+		<table>
+        	<tr>
+			<td>Dari Tanggal </td>
+			<td>: <input type=text name=dari value='$tanggal'>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Sampai Tanggal </td>
+			<td>: <input type=text name=sampai value='$tanggal'>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Kategori </td>
+			<td>: 	<select name='kategori'> 
+				<option value='SEMUA' selected>SEMUA</option>";
+		$hasil	= mysql_query("SELECT idKategoriBarang, namaKategoriBarang FROM kategori_barang");
+		while ($x = mysql_fetch_array($hasil)) {
+			echo "<option value='".$x['idKategoriBarang']."'>".$x['namaKategoriBarang']."</option>";
+		};
+
+		echo "		</select>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Jumlah Item </td>
+			<td>: <input type=text name=jumlah value='200'>
+			</td>
+		</tr>
+
+        	<tr>
+			<td>Sortir berdasarkan</td>
+			<td>: 	<select name='sortir'> 
+				<option value='sisastok' selected>	Jumlah Sisa Stok</option>
+				<option value='umurstok' >		Umur Stok</option>
+				<option value='nilaistok'>		Nilai Stok</option>
+				</select>
+			</td>
+		</tr>
+
+
+        		<tr><td colspan=2><input type=submit value='Buat Laporan'></td></tr>
+		</table>
+			
+		</form>
+
+		";
+	exit;
+	}
+
+  case 'aging2': { // ---------------------------------------------------------------------------------
+
+	if ($_POST['kategori'] == 'SEMUA') {
+		$kategori = 'SEMUA'; 
+	} else {
+		$hasil 	= mysql_query("SELECT namaKategoriBarang FROM kategori_barang WHERE idKategoriBarang=".$_POST['kategori']);
+		$x	= mysql_fetch_array($hasil);
+		$kategori = $x['namaKategoriBarang'];
+	};
+
+	if ($_POST['kategori'] == 'SEMUA') { 
+		$idKategoriBarang = '';	
+	} else {
+		$idKategoriBarang = 'AND b.idKategoriBarang = '.$_POST['kategori'];	
+	};
+
+	$sortir = $_POST['sortir'];
+	$sql	= "SELECT lb.barcode, lb.namaBarang, SUM(lb.jumBarang) AS sisastok, SUM(lb.hargaBeli * lb.jumBarang) AS nilaistok, 
+			(TIMESTAMPDIFF(DAY, lb.tglTransaksiBeli, NOW())) AS umurstok, lb.tglTransaksiBeli 
+		FROM 	(SELECT dj.barcode AS barcode, b.namaBarang AS namaBarang, dj.jumBarang, dj.jumBarangAsli, dj.hargaBeli, 
+				b.idKategoriBarang, dj.tglTransaksiBeli    
+      			FROM barang AS b, 
+             			(SELECT b.barcode, b.hargaBeli, b.jumBarang, b.jumBarangAsli, t.tglTransaksiBeli FROM detail_beli AS b, 
+                    			(SELECT idTransaksiBeli, tglTransaksiBeli FROM transaksibeli 
+                    			WHERE tglTransaksiBeli BETWEEN '".$_POST['dari']."' AND '".$_POST['sampai']."') AS t
+             			WHERE isSold = 'N' AND t.idTransaksiBeli = b.idTransaksiBeli AND b.jumBarang > 0) AS dj  
+			WHERE dj.barcode = b.barcode  $idKategoriBarang ORDER BY dj.barcode) AS lb 
+		GROUP BY lb.barcode 
+		ORDER BY $sortir DESC
+		LIMIT ".$_POST['jumlah'].";
+		";
+	$hasil	= mysql_query($sql) or die("Error : ".mysql_error());
+	//echo $sql;
+
+	echo "
+		<br/>
+		<h2>Laporan Aging</h2>
+		Tanggal:".$_POST['dari']." s/d ".$_POST['sampai']." Kategori: $kategori
+
+		<table>
+		<tr>
+			<td class=td><b><center>No.</center></b></td>
+			<td class=td><b><center>Barcode</center></b></td>
+			<td class=td><b><center>Nama Barang</center></b></td>
+			<td class=td><b><center>Sisa Stok</center></b></td>
+			<td class=td><b><center>Nilai Stok</center></b></td>
+			<td class=td><b><center>Umur Stok</center></b></td>
+		</tr>
+		";
+
+	$no=0;
+	while ($x=mysql_fetch_array($hasil)){
+		//untuk mewarnai tabel menjadi selang-seling
+		$no++;
+		if(($no % 2) == 0){
+			$warna = "#EAF0F7";
+		} else {
+			$warna = "#FFFFFF";
+		}
+
+		echo "<tr bgcolor=$warna>";
+		echo "
+			<td class=td align=center> $no </td>
+			<td class=td> ".$x['barcode']." </td>
+			<td class=td> ".$x['namaBarang']." </td>
+			<td class=td align=right> ".number_format($x['sisastok'],0,',','.')." </td>
+			<td class=td align=right> ".number_format($x['nilaistok'],0,',','.')." </td>
+			<td class=td align=right> ".number_format($x['umurstok'],0,',','.')." </td>
+			</tr>";
+	};
+	echo "</table>";
+
+	exit;
+	}
+
+
 }
 
 

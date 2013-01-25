@@ -13,8 +13,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License v2 (links provided above) for more details.
 ----------------------------------------------------------------*/
 
-include "../../config/config.php";
+if (basename($_SERVER['SCRIPT_NAME']) <> 'media.php') { 
+	// when this module is called directly, we'll need to initialize the session properly
+	session_start();
+	include "../../config/config.php";
+	include "function.php"; 
+};
+
 check_user_access(basename($_SERVER['SCRIPT_NAME']));
+
+
 
 
 	//HS javascript untuk menampilkan popup
@@ -57,7 +65,7 @@ $ambilSatuanBarang = mysql_query("select * from satuan_barang");
 	";
 
 
-switch($_GET[act]){
+switch($_GET['act']){
   // Tampil barang 
   default:  // ========================================================================================================================
     echo "<h2>Data barang</h2>
@@ -919,7 +927,7 @@ switch($_GET[act]){
 		ORDER BY idRak,namaBarang ASC";
 	$daftarBarang = mysql_query($sql);	
 	$jumlahBarang = mysql_num_rows($daftarBarang);
-
+echo $sql;
 
 	// mulai mencetak
 	if ($_GET[printer] == '0') {

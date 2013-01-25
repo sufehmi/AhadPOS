@@ -1274,6 +1274,9 @@ echo $sql;
 
 /* CHANGELOG -----------------------------------------------------------
 
+ 1.5.5 / 2013-01-25 : Harry Sufehmi 	: bugfix: https://github.com/sufehmi/AhadPOS/issues/1 , 
+						terimakasih http://www.facebook.com/civo.pras untuk laporannya.
+
  1.5.0 / 2012-11-25 : Harry Sufehmi 	: optimisasi : query yang menampilkan seluruh data barang.
 						Credit : Insan Fajar
  1.5.0 / 2012-09-09 : Harry Sufehmi	: bugfix: form inputSO3 gagal jika ada > 250 item di suatu rak. 

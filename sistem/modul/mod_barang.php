@@ -923,11 +923,11 @@ switch($_GET['act']){
 
 	// ambil data barang yang akan dicetak
 	$sql = "SELECT idRak, namaBarang, hargaJual, jumBarang
-		FROM barang WHERE jumBarang <> 0 AND idRak BETWEEN $_GET[darirak] AND $_GET[sampairak] 
+		FROM barang WHERE jumBarang <> 0 AND idRak BETWEEN ".$_GET['darirak']." AND ".$_GET['sampairak']." 
 		ORDER BY idRak,namaBarang ASC";
 	$daftarBarang = mysql_query($sql);	
 	$jumlahBarang = mysql_num_rows($daftarBarang);
-echo $sql;
+	//echo $sql;
 
 	// mulai mencetak
 	if ($_GET[printer] == '0') {

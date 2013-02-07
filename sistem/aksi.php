@@ -269,6 +269,26 @@ elseif ($module=='barang' AND $act=='input'){
     header('location:media.php?module='.$module);
 }// end Input Barang
 
+
+// Hapus Barang
+elseif ($module=='barang' AND $act=='hapus'){
+	// copy data barang ke table arsip_barang
+	$sql	= "INSERT INTO arsip_barang (idBarang, namaBarang, idKategoriBarang, idSatuanBarang, jumBarang, 
+			hargaJual, last_update, idSupplier, barcode, username, idRak)
+				SELECT idBarang, namaBarang, idKategoriBarang, idSatuanBarang, jumBarang, 
+					hargaJual, '".date("Y-m-d")."', idSupplier, barcode, '".$_SESSION[uname]."', idRak 
+				FROM barang WHERE idBarang = ".$_GET['id'];
+	$hasil	= mysql_query($sql) or die("Error : ".mysql_error()." :: $sql");
+
+	// hapus data barang dari table barang
+	$sql	= "DELETE FROM barang WHERE idBarang = ".$_GET['id'];
+	$hasil	= mysql_query($sql) or die("Error : ".mysql_error()." :: $sql");
+
+    header('location:media.php?module='.$module);
+
+}// end Hapus Barang
+
+
 // Update Barang
 elseif ($module=='barang' AND $act=='update'){
     $tgl = date("Y-m-d");
@@ -931,6 +951,7 @@ else{ // =======================================================================
 
 /* CHANGELOG -----------------------------------------------------------
 
+ 1.6.0 / 2013-02-07 : Harry Sufehmi	: bugfix: hapus barang kini sudah bisa
  1.2.5 / 2012-04-17 : Harry Sufehmi 	: bugfix: hapus satuan barang tidak berfungsi
  1.2.5 / 2012-03-16 : Harry Sufehmi 	: bugfix: kini perubahan barang (dari Barang - Cari Barang - Ubah) disimpan dengan benar
 						(branch "($module=='barang' AND $act=='update')")

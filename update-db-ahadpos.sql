@@ -52,6 +52,28 @@ ALTER TABLE  `kategori_barang` CHANGE  `idKategoriBarang`  `idKategoriBarang` IN
                 UPDATE `modul` SET `script_name` = 'mod_manage_workstation.php' WHERE `modul`.`link` = '?module=workstation' ;
 
 
+-- version 1.6.0
+
+CREATE TABLE IF NOT EXISTS `arsip_barang` (
+  `idBarang` bigint(20) NOT NULL DEFAULT '0',
+  `namaBarang` varchar(30) DEFAULT ' ',
+  `idKategoriBarang` int(5) DEFAULT '0',
+  `idSatuanBarang` int(5) DEFAULT '0',
+  `jumBarang` int(10) DEFAULT '0',
+  `hargaJual` bigint(20) DEFAULT '0',
+  `last_update` date DEFAULT '2000-01-01',
+  `idSupplier` bigint(20) DEFAULT '0',
+  `barcode` varchar(25) DEFAULT NULL,
+  `username` varchar(30) DEFAULT NULL,
+  `idRak` bigint(5) DEFAULT NULL,
+  UNIQUE KEY `barcode` (`barcode`),
+  KEY `idKategoriBarang` (`idKategoriBarang`),
+  KEY `namaBarang` (`namaBarang`),
+  KEY `idSupplier` (`idSupplier`),
+  KEY `idKategoriBarang_2` (`idKategoriBarang`),
+  KEY `idSupplier_2` (`idSupplier`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
 
 
 -- ------------------ OPTIMIZATIONS ---------------------------- */

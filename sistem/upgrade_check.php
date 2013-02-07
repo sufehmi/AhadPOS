@@ -26,7 +26,7 @@ include "../config/config.php";
 // Software Version : 1.5.0
 // probably a good idea to move these next 3 lines into config.php instead
 $major 		= 1;
-$minor		= 5;
+$minor		= 6;
 $revision	= 0;
 
 // serialize this
@@ -100,6 +100,12 @@ function check_minor_major1($dbminor, $minor, $dbrevision, $revision) {
                 echo "Upgrading database to version 1.5.x \n <br />";
 		check_revision_minor5_major1($dbminor, $minor, $dbrevision, $revision);
 	}
+
+	if ($minor >= 6 && $dbminor < $minor) { 	// ------- upgrade semua patch versi 1.6.x
+                echo "Upgrading database to version 1.6.x \n <br />";
+		check_revision_minor6_major1($dbminor, $minor, $dbrevision, $revision);
+	}
+
 }
 
 
@@ -117,6 +123,12 @@ function check_revision_minor5_major1($dbminor, $minor, $dbrevision, $revision) 
 
         echo "Upgrading database from 1.2.5 to version 1.5.0 \n <br />";
 	upgrade_125_to_150();
+}
+
+function check_revision_minor6_major1($dbminor, $minor, $dbrevision, $revision) {
+
+        echo "Upgrading database from 1.5.0 to version 1.6.0 \n <br />";
+	upgrade_150_to_160();
 }
 
 
@@ -220,6 +232,44 @@ function upgrade_125_to_150() {
 }
 
 
+function upgrade_150_to_160() {
+
+	$sql 	= "CREATE TABLE IF NOT EXISTS `arsip_barang` (
+			`idBarang` bigint(20) NOT NULL DEFAULT '0',
+			`namaBarang` varchar(30) DEFAULT ' ',
+			`idKategoriBarang` int(5) DEFAULT '0',
+  			`idSatuanBarang` int(5) DEFAULT '0',
+			`jumBarang` int(10) DEFAULT '0',
+			`hargaJual` bigint(20) DEFAULT '0',
+			`last_update` date DEFAULT '2000-01-01',
+			`idSupplier` bigint(20) DEFAULT '0',
+			`barcode` varchar(25) DEFAULT NULL,
+			`username` varchar(30) DEFAULT NULL,
+			`idRak` bigint(5) DEFAULT NULL,
+			  UNIQUE KEY `barcode` (`barcode`),
+			  KEY `idKategoriBarang` (`idKategoriBarang`),
+			  KEY `namaBarang` (`namaBarang`),
+			  KEY `idSupplier` (`idSupplier`),
+			  KEY `idKategoriBarang_2` (`idKategoriBarang`),
+			  KEY `idSupplier_2` (`idSupplier`)
+			) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+		";
+        $hasil  = exec_query($sql);
+	echo mysql_error();
+
+        // update version number ------------------------------------------------------
+        $sql    = "SELECT * FROM config WHERE `option` = 'version'";
+        $hasil  = mysql_query($sql);
+
+        if (mysql_num_rows($hasil) > 0) {
+                $sql = "UPDATE config SET value = '".serialize(array(1,6,0))."' WHERE `option` = 'version'";
+        } else {
+                $sql  = "INSERT INTO config (`option`, value, description) VALUES ('version', '".serialize(array(1,6,0))."', '')";
+        };
+        $hasil  = mysql_query($sql);
+
+}
+
 
 // =================================== PATCH VERSI 2.x.x ==========================================
 function check_minor_major2($dbminor, $minor, $dbrevision, $revision) {
@@ -238,7 +288,7 @@ function check_minor_major3($dbminor, $minor, $dbrevision, $revision) {
 // ==================== general functions ==============================
 
 function exec_query($sql) {
-// loop through & execute multiple query lines
+// able to loop through & execute MULTIPLE query lines
 
 	$queries = preg_split("/;+(?=([^'|^\\\']*['|\\\'][^'|^\\\']*['|\\\'])*[^'|^\\\']*[^'|^\\\']$)/", $sql); 
 	foreach ($queries as $query){ 
@@ -258,6 +308,8 @@ function selesai() {
 
 
 /* CHANGELOG -----------------------------------------------------------
+
+ 1.6.0 / 2013-02-07  : Harry Sufehmi	: table arsip_barang
 
  1.5.0 / 2012-11-25  : Harry Sufehmi	: initial release
 
